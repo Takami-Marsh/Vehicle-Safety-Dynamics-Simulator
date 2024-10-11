@@ -1,4 +1,4 @@
-# Vehicle Dynamics Simulator: Maximum Safe Speed on Curves
+# Vehicle Safety Dynamics Simulator: Maximum Safe Speed on Curves
 
 This project simulates the maximum safe speed a vehicle can achieve on curves without slipping or losing contact with the road, considering forces such as torque, friction, and aerodynamic drag.
 
