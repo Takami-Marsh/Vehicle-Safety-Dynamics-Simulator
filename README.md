@@ -24,7 +24,7 @@ The vehicle's motion and safety constraints are modeled using the following key 
 ### 1. **Centripetal Force**:
 The centripetal force $`F_c`$ keeps the vehicle moving along the curve:
 ```math
-F_c = \frac{m \cdot v^2}{r}
+F_c = \frac{m \cdot v^2}{r + h}
 ```
 Where:
 - $`m`$ is the mass of the vehicle.
