@@ -169,6 +169,8 @@ The model outputs a close match with Japan’s minimum curve radius and design s
 | 380    | 100    | 104.57    |
 | 570    | 120    | 126.27    |
 
+<img width="476" alt="image" src="https://github.com/user-attachments/assets/b6d1525b-2b84-4be8-bdc7-b02b67ab78f9">
+
 This shows a strong correlation (when plotting model's output vs design speed, y = 0.9531x + 0.7822 with R² = 0.998) between the model’s predictions and legal limits, confirming the model’s reliability.
 
 ## License
