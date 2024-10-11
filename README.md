@@ -1,65 +1,68 @@
 # Vehicle Safety Dynamics Simulator: Maximum Safe Speed on Curves
 
-This project simulates the maximum safe speed a vehicle can achieve on curves without slipping or losing contact with the road, considering forces such as torque, friction, and aerodynamic drag.
+This project simulates the maximum safe speed a vehicle can achieve on curves without slipping or losing contact with the road, considering forces such as torque, friction, and aerodynamic drag. The model is designed with worst-case scenarios in mind, ensuring that vehicles maintain stability in challenging road conditions, especially in Japan where unpredictable weather events often occur.
 
 ## Purpose
 
-This project models the maximum safe speed a vehicle can travel on circular curves, providing an algorithmic approach that calculates whether a vehicle can navigate a curve safely, based on physical parameters such as mass, wheelbase, drag force, and more.
+The objective of this project is to model the maximum safe speed a vehicle can travel through circular curves by computing whether the vehicle can navigate the curve safely based on physical parameters such as mass, wheelbase, aerodynamic drag, and more. The project is aimed at supporting the development of autonomous driving systems and improving their safety checks.
 
-The code simulates the behavior of vehicles traveling through curves of varying radii. It determines if the vehicle's maximum speed is constrained by torque and friction, using physical laws like centripetal force, aerodynamic drag, and frictional forces.
+The algorithm calculates forces acting on the vehicle and checks if the speed is constrained by torque, friction, or aerodynamic drag. By iterating through various speed values, it identifies the maximum safe speed.
 
 ## Features
 
 - Computes the maximum velocity a vehicle can safely travel without slipping on curves.
-- Considers aerodynamic drag, centripetal force, torque, and friction.
-- Configurable physical parameters such as vehicle mass, dimensions, and wheel radius.
-- Supports different curve radii to test how these parameters affect the vehicle's stability.
+- Considers forces such as aerodynamic drag, centripetal force, torque, and friction.
+- Supports a variety of vehicle and environmental parameters, including mass, wheelbase, and wind speed.
+- Uses a binary search algorithm to determine the maximum safe velocity efficiently.
 
 ## How It Works
 
 ### Mathematical Model
 
-The vehicle's motion and safety constraints are modeled using the following key mathematical equations, derived from classical mechanics and aerodynamic principles.
+The model uses classical mechanics and aerodynamic principles to simulate the forces acting on a vehicle as it navigates curves. Below are the core equations used in the model:
 
 ### 1. **Centripetal Force**:
-The centripetal force $`F_c`$ keeps the vehicle moving along the curve:
+The centripetal force $` F_c `$ keeps the vehicle moving along the curve:
 ```math
 F_c = \frac{m \cdot v^2}{r + h}
 ```
 Where:
-- $`m`$ is the mass of the vehicle.
-- $`v`$ is the velocity of the vehicle.
-- $`r`$ is the radius of the curve.
+- $` m `$ is the mass of the vehicle $`[ \text{kg} ]`$,
+- $` v `$ is the velocity of the vehicle $`[ \text{m/s} ]`$,
+- $` r `$ is the radius of the curve $`[ \text{m} ]`$,
+- $` h `$ is the height of the vehicle's center of mass $`[ \text{m} ]`$.
 
-This force points towards the center of the curve and is responsible for the vehicle's circular motion.
+This force is responsible for the circular motion of the vehicle and increases with speed or as the radius of the curve decreases.
 
 ### 2. **Aerodynamic Drag Force**:
-The drag force $`F_{ad}`$ opposes the vehicle's motion through the air and is given by:
+The drag force $` F_{ad} `$ opposes the vehicle's motion through the air and is calculated as:
 ```math
 F_{ad} = \frac{0.525 \cdot P \cdot A \cdot v'^2}{287.05 \cdot T}
 ```
 Where:
-- $`P`$ is the air pressure.
-- $`A`$ is the effective cross-sectional area of the vehicle.
-- $`v'`$ is the vehicle's relative velocity to the wind.
-- $`T`$ is the temperature.
+- $` P `$ is the air pressure $`[ \text{Pa} ]`$,
+- $` A `$ is the effective cross-sectional area of the vehicle $`[ \text{m}^2 ]`$,
+- $` v' `$ is the vehicle’s relative velocity to the wind $`[ \text{m/s} ]`$,
+- $` T `$ is the temperature $`[ \text{K} ]`$.
+
+This force depends on the vehicle's shape, speed, and wind conditions.
 
 ### 3. **Torque**:
-Torque plays a role when the vehicle takes a curve, potentially causing the vehicle to roll over. The torque $` \tau `$ exerted on the vehicle is calculated as:
+Torque plays a critical role in determining the vehicle's stability on a curve. The torque $` \tau `$ acting on the vehicle is computed as:
 ```math
 \tau = \left(\frac{h}{2}\right) \cdot \left(F_{ad} \cdot \sin(\lambda - \phi - \alpha) + F_{c'}\right)
 ```
 Where:
-- $`h`$ is the height of the vehicle.
-- $`\lambda`$ is the wind angle relative to the vehicle.
-- $`\phi`$ is the rotation angle due to wheel movement.
-- $`\alpha`$ is the body angle of the vehicle.
-- $`F_{c'}`$ is the adjusted centripetal force.
+- $` h `$ is the height of the vehicle $`[ \text{m} ]`$,
+- $` \lambda `$ is the wind angle relative to the vehicle $`[ \text{rad} ]`$,
+- $` \phi `$ is the angle traveled along the curve $`[ \text{rad} ]`$,
+- $` \alpha `$ is the angle between the vehicle's outer-most contact point and the ground $`[ \text{rad} ]`$,
+- $` F_{c'} `$ is the adjusted centripetal force $`[ \text{N} ]`$.
 
-If the torque exceeds a certain threshold, the vehicle risks losing stability and rolling over.
+If torque exceeds the stability threshold, the vehicle is at risk of rolling over.
 
 ### 4. **Static Friction**:
-Friction between the tires and the road prevents the vehicle from slipping. The forces acting perpendicular to the tires are calculated for the front and rear tires:
+Friction between the tires and the road prevents the vehicle from slipping. The forces acting on the front and rear tires are calculated as:
 ```math
 F_f = F_c + F_{ad} \cdot \sin(\lambda - \phi - \theta)
 ```
@@ -67,77 +70,107 @@ F_f = F_c + F_{ad} \cdot \sin(\lambda - \phi - \theta)
 F_r = F_c \cdot \cos(\theta) + F_{ad} \cdot \sin(\lambda - \phi)
 ```
 Where:
-- $`F_f`$ is the force acting perpendicular to the front tires.
-- $`F_r`$ is the force acting perpendicular to the rear tires.
-- $`\theta`$ is the angle of the tires to the horizontal.
-  
-The vehicle will start slipping when these forces exceed the maximum static friction, calculated as:
+- $` F_f `$ and $` F_r `$ are the forces acting on the front and rear tires, respectively $`[ \text{N} ]`$,
+- $` \theta `$ is the tire angle $`[ \text{rad} ]`$.
+
+The vehicle will start slipping when these forces exceed the maximum static friction, given by:
 ```math
-\mu \cdot m \cdot g
+F_{max} = \mu \cdot m \cdot g
 ```
 Where:
-- $`\mu`$ is the coefficient of static friction.
-- $`g`$ is the gravitational acceleration.
+- $` \mu `$ is the coefficient of static friction $`[ \text{unitless} ]`$,
+- $` g `$ is the gravitational acceleration $`[ 9.81 \, \text{m/s}^2 ]`$.
 
 ### 5. **Cross-sectional Area Calculation**:
-The cross-sectional area of the vehicle relative to the wind is:
+The vehicle’s cross-sectional area relative to the wind is:
 ```math
 A = h \cdot \left( |w \cdot \cos(\lambda - \phi)| + |l \cdot \sin(\lambda - \phi)| \right)
 ```
 Where:
-- $`w`$ is the width of the vehicle.
-- $`l`$ is the length of the vehicle.
+- $` w `$ is the width of the vehicle $`[ \text{m} ]`$,
+- $` l `$ is the length of the vehicle $`[ \text{m} ]`$.
 
-The aerodynamic drag force depends on this area as well as the relative velocity of the vehicle to the wind.
+### 6. **Binary Search Algorithm**:
+The algorithm employs a binary search approach to find the maximum safe speed. The search progressively narrows the range of velocities, checking at each step if the computed forces remain below the safety thresholds.
+
+### Algorithm Efficiency:
+- **Time Complexity**: $` O(\log n) `$ — The binary search method ensures efficient computation, checking fewer speed values as the range narrows down exponentially.
+- **Space Complexity**: $` O(1) `$ — Only a fixed amount of space is used, regardless of the problem size.
 
 ### Code Structure
 
 1. **Velocity Calculation**:
-   The code calculates the vertical and horizontal components of velocity relative to the wind, considering the vehicle's speed and wind direction.
+   The code calculates the vertical and horizontal components of the vehicle's velocity relative to the wind.
 
 2. **Torque and Friction Check**:
-   It iterates through time steps to compute torque and friction forces acting on the vehicle. If either the maximum allowable torque or friction is exceeded, the vehicle is deemed unstable at that velocity.
+   It iterates through time steps to compute torque and friction forces. If either the maximum allowable torque or friction is exceeded, the vehicle is deemed unstable at that speed.
 
 3. **Binary Search**:
-   A binary search algorithm is used to find the maximum velocity at which the vehicle can safely navigate the curve. The algorithm checks the stability at progressively higher speeds until it finds the maximum stable speed.
+   A binary search algorithm identifies the maximum stable speed by evaluating whether the vehicle maintains stability under given conditions at each speed increment.
 
-### Example Usage
+## Example Usage
 
 1. **Clone the Repository**:
 
+```bash
 git clone https://github.com/Takami-Marsh/Vehicle-Safety-Dynamics-Simulator.git
+```
 
 2. **Navigate to the Source Directory**:
 
+```bash
 cd vehicle-dynamics/src
+```
 
 3. **Compile the Code**:
 Use a C++ compiler to compile the code:
 
+```bash
 g++ main.cpp -o vehicle_dynamics
+```
 
 4. **Run the Program**:
 
+```bash
 ./vehicle_dynamics
+```
 
-The program will output the maximum safe speeds for different wheel radii (in km/h).
+The program will output the maximum safe speeds for different curve radii (in km/h).
 
-### Parameters
+## Parameters
 
-The vehicle's physical parameters are initialized in the `main()` function:
-- **height**: Height of the vehicle (in meters).
-- **length**: Length of the vehicle (in meters).
-- **width**: Width of the vehicle (in meters).
-- **wheelbase**: Distance between the front and rear wheels (in meters).
-- **wheelWidth**: Width of the wheels (in meters).
-- **mass**: Mass of the vehicle (in kilograms).
-- **curveRadius**: Radius of the curve (in meters).
-- **airPressure**: Atmospheric pressure (in Pascals).
-- **airTemperature**: Air temperature (in Kelvin).
-- **windVelocity**: Wind speed (in meters per second).
-- **windDirection**: Wind direction angle (in radians).
-- **frictionCoefficient**: Coefficient of static friction between tires and road.
+The vehicle’s physical parameters are initialized in the main() function:
 
-### License
+-	height: Height of the vehicle (in meters).
+-	length: Length of the vehicle (in meters).
+-	width: Width of the vehicle (in meters).
+-	wheelbase: Distance between the front and rear wheels (in meters).
+-	wheelWidth: Width of the wheels (in meters).
+-	mass: Mass of the vehicle (in kilograms).
+-	curveRadius: Radius of the curve (in meters).
+-	airPressure: Atmospheric pressure (in Pascals).
+-	airTemperature: Air temperature (in Kelvin).
+-	windVelocity: Wind speed (in meters per second).
+-	windDirection: Wind direction angle (in radians).
+-	frictionCoefficient: Coefficient of static friction between tires and road.
+
+## Legal Comparison
+
+The model outputs a close match with Japan’s minimum curve radius and design speed limits when using values considering the worst-case scenario that could happen in Japan (which is the default parameters in the code):
+
+| Curve Radius (m)    | Design Speed (km/h) | Model Output (km/h) |
+| -------- | ------- | ------- |
+| 15  | 20    | 23.16    |
+| 30 | 30     | 31.36    |
+| 50    | 40    | 39.83    |
+| 80    | 50    | 49.82    |
+| 120    | 60    | 60.50    |
+| 230    | 80    | 82.52    |
+| 380    | 100    | 104.57    |
+| 570    | 120    | 126.27    |
+
+This shows a strong correlation (when plotting model's output vs design speed, y = 0.9531x + 0.7822 with R² = 0.998) between the model’s predictions and legal limits, confirming the model’s reliability.
+
+## License
 
 This project is licensed under the MIT License.
