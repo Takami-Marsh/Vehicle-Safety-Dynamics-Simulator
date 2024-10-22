@@ -132,7 +132,7 @@ private:
       maxTorque = max(maxTorque, torque);
     }
 
-    ld weightTorque = ((params.mass * params.GRAVITY * (params.width + (params.wheelWidth * cos(theta)))) / 2);
+    ld weightTorque = (params.mass * params.GRAVITY * (params.width + (params.wheelWidth * cos(theta))));
     ld frictionLimit = params.mass * params.GRAVITY * params.frictionCoeff;
 
     return maxTorque >= weightTorque || maxForce >= frictionLimit;
